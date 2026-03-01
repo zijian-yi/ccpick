@@ -8,7 +8,13 @@ Claude Code commands, skills, and plugins either live in `~/.claude/` (loaded gl
 
 ## Install
 
+Pre-requisites:
+- Git
+- Rust, Cargo (https://www.rust-lang.org/tools/install)
+
 ```bash
+git clone https://github.com/zijian-yi/ccpick
+cd ccpick
 cargo install --path .
 ```
 

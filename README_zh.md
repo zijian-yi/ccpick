@@ -8,7 +8,14 @@ Claude Code 的命令、技能和插件要么放在 `~/.claude/` 全局加载到
 
 ## 安装
 
+前置条件：
+
+- Git
+- Rust、Cargo (https://www.rust-lang.org/tools/install)
+
 ```bash
+git clone https://github.com/zijian-yi/ccpick
+cd ccpick
 cargo install --path .
 ```
 
@@ -53,3 +60,6 @@ ccpick template apply backend       # 应用到其他项目
 
 每个项目的 `.claude/` 目录相互独立。运行时不修改全局状态，多项目并发使用是安全的。
 
+## 致谢
+
+- [trailofbits/claude-code-config](https://github.com/trailofbits/claude-code-config)
