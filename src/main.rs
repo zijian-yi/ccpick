@@ -4,6 +4,7 @@ mod config;
 mod manifest;
 mod plugins;
 mod project;
+mod remote;
 mod scanner;
 mod symlinks;
 
@@ -35,6 +36,9 @@ fn main() -> Result<()> {
         Command::Init(args) => commands::init::run(&args),
         Command::Edit => commands::edit::run(),
         Command::Sync => commands::sync::run(),
+        Command::Install(args) => {
+            commands::install::run(&args)
+        }
         Command::Template(args) => {
             commands::template::run(&args.action)
         }

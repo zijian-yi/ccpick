@@ -20,8 +20,25 @@ pub enum Command {
     Edit,
     /// Re-apply selections from the saved manifest
     Sync,
+    /// Install commands/skills from a GitHub repository
+    Install(InstallArgs),
     /// Manage reusable configuration templates
     Template(TemplateArgs),
+}
+
+#[derive(Args)]
+pub struct InstallArgs {
+    /// GitHub repository URL (e.g. owner/repo or full URL)
+    pub url: String,
+    /// Install to ~/.claude/ (global)
+    #[arg(short, long, conflicts_with = "local")]
+    pub global: bool,
+    /// Install to .claude/ (current project only)
+    #[arg(short, long, conflicts_with = "global")]
+    pub local: bool,
+    /// Git branch (overrides branch parsed from URL)
+    #[arg(long)]
+    pub branch: Option<String>,
 }
 
 #[derive(Args)]

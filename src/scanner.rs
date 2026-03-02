@@ -87,7 +87,7 @@ fn collect_skill_dirs_recursive(
     Ok(())
 }
 
-fn contains_skill_md(dir: &Path) -> Result<bool> {
+pub fn contains_skill_md(dir: &Path) -> Result<bool> {
     let entries = fs::read_dir(dir)
         .with_context(|| format!("reading {}", dir.display()))?;
 

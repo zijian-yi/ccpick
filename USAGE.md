@@ -20,6 +20,38 @@ ccpick tidy [OPTIONS]
 
 When no flags are given, all three categories are tidied.
 
+### `ccpick install`
+
+Install commands and skills from a GitHub repository into the ccpick library (or other targets).
+
+```
+ccpick install <URL> [OPTIONS]
+```
+
+| Flag | Effect |
+|------|--------|
+| `-g`, `--global` | Install to `~/.claude/` (global) |
+| `-l`, `--local` | Install to `.claude/` (current project only) |
+| `--branch <BRANCH>` | Git branch (overrides branch parsed from URL) |
+
+Without `-g` or `-l`, items install to the ccpick library (`~/.claude/ccpick/`).
+
+**URL formats:**
+
+| Pattern | Example |
+|---------|---------|
+| Full URL | `https://github.com/owner/repo` |
+| No scheme | `github.com/owner/repo` |
+| Shorthand | `owner/repo` |
+| Specific path | `https://github.com/owner/repo/tree/main/commands` |
+| Single file | `https://github.com/owner/repo/blob/main/commands/config.md` |
+
+**Repo root** (no sub-path in URL): scans `commands/` and `skills/` directories and opens an interactive picker.
+
+**Specific path** (sub-path in URL): auto-detects whether the path is a command (`.md` file) or skill (directory with `skill.md`) and installs it directly.
+
+If the destination already exists, the item is skipped.
+
 ### `ccpick init`
 
 Set up the current project. Without `--template`, opens an interactive picker for commands, skills, and plugins. Creates symlinks in `.claude/commands/` and `.claude/skills/`, writes plugin settings to `.claude/settings.local.json`, and saves selections to `.claude/ccpick.json`.

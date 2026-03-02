@@ -30,13 +30,16 @@ ccpick also manages Claude Code's plugin mechanism (which is global by default),
 # 1. Move existing global extensions into the library (one-time)
 ccpick tidy
 
-# 2. Pick extensions for the current project
+# 2. Install extensions from GitHub
+ccpick install owner/repo
+
+# 3. Pick extensions for the current project
 ccpick init
 
-# 3. Later, update selections
+# 4. Later, update selections
 ccpick edit
 
-# 4. Re-apply from manifest (e.g., after git clone)
+# 5. Re-apply from manifest (e.g., after git clone)
 ccpick sync
 ```
 
