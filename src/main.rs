@@ -12,7 +12,8 @@ mod symlinks;
 use std::io::ErrorKind;
 
 use anyhow::Result;
-use clap::Parser;
+use clap::{CommandFactory, Parser};
+use clap_complete::generate;
 use console::Term;
 
 use cli::{Cli, Command};
@@ -40,6 +41,15 @@ fn main() -> Result<()> {
         Command::Install(args) => commands::install::run(&args),
         Command::Template(args) => commands::template::run(&args.action),
         Command::Guide(args) => commands::guide::run(&args.action),
+        Command::Completions { shell } => {
+            generate(
+                shell,
+                &mut Cli::command(),
+                "ccpick",
+                &mut std::io::stdout(),
+            );
+            Ok(())
+        }
     };
 
     if let Err(ref err) = result

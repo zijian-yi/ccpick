@@ -269,6 +269,29 @@ ccpick guide show rust-backend
 ccpick guide show base
 ```
 
+### `ccpick completions`
+
+Generate shell completion scripts.
+
+```
+ccpick completions <SHELL>
+```
+
+Supported shells: `bash`, `zsh`, `fish`, `elvish`, `powershell`.
+
+**Setup examples:**
+
+```bash
+# Zsh (add to ~/.zshrc)
+eval "$(ccpick completions zsh)"
+
+# Bash (add to ~/.bashrc)
+eval "$(ccpick completions bash)"
+
+# Fish (run once)
+ccpick completions fish > ~/.config/fish/completions/ccpick.fish
+```
+
 ## File layout
 
 | Path | Purpose |

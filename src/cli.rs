@@ -1,4 +1,5 @@
 use clap::{Args, Parser, Subcommand};
+use clap_complete::Shell;
 
 #[derive(Parser)]
 #[command(name = "ccpick", about = "Per-project Claude Code extension manager")]
@@ -23,6 +24,11 @@ pub enum Command {
     Template(TemplateArgs),
     /// Manage CLAUDE.md/AGENTS.md templates and presets
     Guide(GuideArgs),
+    /// Generate shell completions
+    Completions {
+        /// Shell to generate completions for
+        shell: Shell,
+    },
 }
 
 #[derive(Args)]
