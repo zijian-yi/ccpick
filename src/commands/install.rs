@@ -79,13 +79,12 @@ fn install_repo(term: &Term, clone_root: &Path, target: &Target, paths: &Paths) 
 
     for base in &scan_roots {
         let cmd_dir = base.join("commands");
-        let skill_dir = base.join("skills");
 
         for rel in scanner::scan_md_files(&cmd_dir)? {
             commands.push((cmd_dir.clone(), rel));
         }
-        for rel in scanner::scan_skill_dirs(&skill_dir)? {
-            skills.push((skill_dir.clone(), rel));
+        for rel in scanner::scan_skill_dirs(base)? {
+            skills.push((base.clone(), rel));
         }
     }
 
