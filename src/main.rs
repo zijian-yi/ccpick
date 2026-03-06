@@ -1,6 +1,7 @@
 mod cli;
 mod commands;
 mod config;
+mod guide;
 mod manifest;
 mod plugins;
 mod project;
@@ -36,12 +37,9 @@ fn main() -> Result<()> {
         Command::Init(args) => commands::init::run(&args),
         Command::Edit => commands::edit::run(),
         Command::Sync => commands::sync::run(),
-        Command::Install(args) => {
-            commands::install::run(&args)
-        }
-        Command::Template(args) => {
-            commands::template::run(&args.action)
-        }
+        Command::Install(args) => commands::install::run(&args),
+        Command::Template(args) => commands::template::run(&args.action),
+        Command::Guide(args) => commands::guide::run(&args.action),
     };
 
     if let Err(ref err) = result
@@ -59,13 +57,7 @@ fn is_user_abort(err: &anyhow::Error) -> bool {
         return true;
     }
     err.downcast_ref::<std::io::Error>()
-        .is_some_and(|e| {
-            matches!(
-                e.kind(),
-                ErrorKind::UnexpectedEof
-                    | ErrorKind::Interrupted
-            )
-        })
+        .is_some_and(|e| matches!(e.kind(), ErrorKind::UnexpectedEof | ErrorKind::Interrupted))
 }
 
 fn show_cursor() {

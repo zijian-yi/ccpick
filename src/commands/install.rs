@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, Context, Result};
-use console::{style, Term};
+use anyhow::{Context, Result, bail};
+use console::{Term, style};
 use dialoguer::MultiSelect;
 
 use crate::cli::InstallArgs;
@@ -25,20 +25,14 @@ pub fn run(args: &InstallArgs) -> Result<()> {
     let paths = Paths::resolve()?;
     let repo_ref = remote::parse_github_url(&args.url)?;
 
-    let mut label = format!(
-        "{}/{}",
-        repo_ref.owner, repo_ref.repo
-    );
+    let mut label = format!("{}/{}", repo_ref.owner, repo_ref.repo);
     if let Some(path) = &repo_ref.path {
         use std::fmt::Write;
         let _ = write!(label, "/{path}");
     }
     term.write_line(&format!("Cloning {label}..."))?;
 
-    let clone_dir = remote::shallow_clone(
-        &repo_ref,
-        args.branch.as_deref(),
-    )?;
+    let clone_dir = remote::shallow_clone(&repo_ref, args.branch.as_deref())?;
 
     let target = if args.global {
         Target::Global
@@ -49,13 +43,7 @@ pub fn run(args: &InstallArgs) -> Result<()> {
     };
 
     if let Some(sub_path) = &repo_ref.path {
-        install_path(
-            &term,
-            clone_dir.path(),
-            sub_path,
-            &target,
-            &paths,
-        )
+        install_path(&term, clone_dir.path(), sub_path, &target, &paths)
     } else {
         install_repo(&term, clone_dir.path(), &target, &paths)
     }
@@ -84,12 +72,7 @@ fn collect_scan_roots(clone_root: &Path) -> Result<Vec<PathBuf>> {
 
 /// Install from a repo root: scan commands/ and skills/,
 /// present an interactive picker, and copy selected items.
-fn install_repo(
-    term: &Term,
-    clone_root: &Path,
-    target: &Target,
-    paths: &Paths,
-) -> Result<()> {
+fn install_repo(term: &Term, clone_root: &Path, target: &Target, paths: &Paths) -> Result<()> {
     let scan_roots = collect_scan_roots(clone_root)?;
     let mut commands: Vec<(PathBuf, PathBuf)> = Vec::new();
     let mut skills: Vec<(PathBuf, PathBuf)> = Vec::new();
@@ -107,9 +90,7 @@ fn install_repo(
     }
 
     if commands.is_empty() && skills.is_empty() {
-        bail!(
-            "no commands or skills found in repository"
-        );
+        bail!("no commands or skills found in repository");
     }
 
     let mut items: Vec<(&str, &Path, &PathBuf)> = Vec::new();
@@ -122,9 +103,7 @@ fn install_repo(
 
     let labels: Vec<String> = items
         .iter()
-        .map(|(cat, _, rel)| {
-            format!("[{cat}] {}", rel.display())
-        })
+        .map(|(cat, _, rel)| format!("[{cat}] {}", rel.display()))
         .collect();
 
     let defaults: Vec<bool> = vec![false; items.len()];
@@ -204,8 +183,7 @@ fn install_path(
     }
 
     let (category, rel_path) = detect_type(&src, sub_path)?;
-    let dst_dir =
-        resolve_target_dir(target, category, paths)?;
+    let dst_dir = resolve_target_dir(target, category, paths)?;
     let dst = dst_dir.join(&rel_path);
 
     if dst.exists() {
@@ -236,15 +214,9 @@ fn install_path(
 /// - Directory with only `.md` files → commands (error:
 ///   ambiguous, use repo-root mode)
 /// - Otherwise → error with guidance
-fn detect_type(
-    src: &Path,
-    sub_path: &str,
-) -> Result<(&'static str, String)> {
+fn detect_type(src: &Path, sub_path: &str) -> Result<(&'static str, String)> {
     if src.is_file() {
-        if src
-            .extension()
-            .is_some_and(|ext| ext == "md")
-        {
+        if src.extension().is_some_and(|ext| ext == "md") {
             let name = src
                 .file_name()
                 .context("getting file name")?
@@ -269,10 +241,8 @@ fn detect_type(
             return Ok(("skills", name));
         }
 
-        let has_commands =
-            !scanner::scan_md_files(src)?.is_empty();
-        let has_skills =
-            !scanner::scan_skill_dirs(src)?.is_empty();
+        let has_commands = !scanner::scan_md_files(src)?.is_empty();
+        let has_skills = !scanner::scan_skill_dirs(src)?.is_empty();
 
         match (has_commands, has_skills) {
             (true, true) => bail!(
@@ -301,11 +271,7 @@ fn detect_type(
     bail!("'{sub_path}' is not a file or directory");
 }
 
-fn resolve_target_dir(
-    target: &Target,
-    category: &str,
-    paths: &Paths,
-) -> Result<PathBuf> {
+fn resolve_target_dir(target: &Target, category: &str, paths: &Paths) -> Result<PathBuf> {
     let base = match target {
         Target::Library => match category {
             "commands" => paths.library_commands(),
@@ -326,23 +292,15 @@ fn resolve_target_dir(
 /// Copy a file or directory recursively.
 fn copy_entry(src: &Path, dst: &Path) -> Result<()> {
     if let Some(parent) = dst.parent() {
-        fs::create_dir_all(parent).with_context(|| {
-            format!("creating {}", parent.display())
-        })?;
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
     }
 
-    let meta = fs::metadata(src).with_context(|| {
-        format!("reading metadata for {}", src.display())
-    })?;
+    let meta =
+        fs::metadata(src).with_context(|| format!("reading metadata for {}", src.display()))?;
 
     if meta.is_file() {
-        fs::copy(src, dst).with_context(|| {
-            format!(
-                "copying {} → {}",
-                src.display(),
-                dst.display()
-            )
-        })?;
+        fs::copy(src, dst)
+            .with_context(|| format!("copying {} → {}", src.display(), dst.display()))?;
     } else if meta.is_dir() {
         copy_dir_recursive(src, dst)?;
     }
@@ -350,12 +308,9 @@ fn copy_entry(src: &Path, dst: &Path) -> Result<()> {
 }
 
 fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
-    fs::create_dir_all(dst).with_context(|| {
-        format!("creating {}", dst.display())
-    })?;
+    fs::create_dir_all(dst).with_context(|| format!("creating {}", dst.display()))?;
 
-    let entries = fs::read_dir(src)
-        .with_context(|| format!("reading {}", src.display()))?;
+    let entries = fs::read_dir(src).with_context(|| format!("reading {}", src.display()))?;
 
     for entry in entries {
         let entry = entry?;
@@ -364,25 +319,19 @@ fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
         if entry.file_type()?.is_dir() {
             copy_dir_recursive(&entry.path(), &dst_path)?;
         } else {
-            fs::copy(entry.path(), &dst_path).with_context(
-                || {
-                    format!(
-                        "copying {} → {}",
-                        entry.path().display(),
-                        dst_path.display()
-                    )
-                },
-            )?;
+            fs::copy(entry.path(), &dst_path).with_context(|| {
+                format!(
+                    "copying {} → {}",
+                    entry.path().display(),
+                    dst_path.display()
+                )
+            })?;
         }
     }
     Ok(())
 }
 
-fn print_summary(
-    term: &Term,
-    installed: u32,
-    skipped: u32,
-) -> Result<()> {
+fn print_summary(term: &Term, installed: u32, skipped: u32) -> Result<()> {
     let mut parts = Vec::new();
     if installed > 0 {
         parts.push(format!("{installed} installed"));
@@ -391,11 +340,7 @@ fn print_summary(
         parts.push(format!("{skipped} skipped"));
     }
 
-    term.write_line(&format!(
-        "\n{} {}",
-        style("✓").green(),
-        parts.join(", "),
-    ))?;
+    term.write_line(&format!("\n{} {}", style("✓").green(), parts.join(", "),))?;
     Ok(())
 }
 
@@ -457,8 +402,7 @@ mod tests {
         let file = tmp.path().join("config.md");
         fs::write(&file, "# config").unwrap();
 
-        let (cat, name) =
-            detect_type(&file, "config.md").unwrap();
+        let (cat, name) = detect_type(&file, "config.md").unwrap();
         assert_eq!(cat, "commands");
         assert_eq!(name, "config.md");
     }
@@ -470,8 +414,7 @@ mod tests {
         fs::create_dir_all(&dir).unwrap();
         fs::write(dir.join("skill.md"), "# skill").unwrap();
 
-        let (cat, name) =
-            detect_type(&dir, "review").unwrap();
+        let (cat, name) = detect_type(&dir, "review").unwrap();
         assert_eq!(cat, "skills");
         assert_eq!(name, "review");
     }

@@ -15,8 +15,7 @@ pub struct Paths {
 
 impl Paths {
     pub fn resolve() -> Result<Self> {
-        let home = dirs::home_dir()
-            .context("could not determine home directory")?;
+        let home = dirs::home_dir().context("could not determine home directory")?;
         let claude_home = home.join(".claude");
         let library = claude_home.join("ccpick");
         let global_commands = claude_home.join("commands");
@@ -39,5 +38,9 @@ impl Paths {
 
     pub fn templates_dir(&self) -> PathBuf {
         self.library.join("templates")
+    }
+
+    pub fn guide_dir(&self) -> PathBuf {
+        self.library.join("guide")
     }
 }

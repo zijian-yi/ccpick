@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use console::{style, Term};
+use console::{Term, style};
 
 use crate::config::Paths;
 use crate::manifest::Manifest;
@@ -15,16 +15,11 @@ pub fn run() -> Result<()> {
     run_inner(&term, &paths, &project_dir)
 }
 
-fn run_inner(
-    term: &Term,
-    paths: &Paths,
-    project_dir: &Path,
-) -> Result<()> {
-    let manifest = Manifest::read(project_dir)?
-        .context(
-            "no .claude/ccpick.json found — \
+fn run_inner(term: &Term, paths: &Paths, project_dir: &Path) -> Result<()> {
+    let manifest = Manifest::read(project_dir)?.context(
+        "no .claude/ccpick.json found — \
              run `ccpick init` first",
-        )?;
+    )?;
 
     let mut warnings = Vec::new();
 
@@ -35,9 +30,7 @@ fn run_inner(
         .filter(|c| {
             let exists = lib_commands.join(c).exists();
             if !exists {
-                warnings.push(format!(
-                    "command not in library: {c}"
-                ));
+                warnings.push(format!("command not in library: {c}"));
             }
             exists
         })
@@ -51,9 +44,7 @@ fn run_inner(
         .filter(|s| {
             let exists = lib_skills.join(s).exists();
             if !exists {
-                warnings.push(format!(
-                    "skill not in library: {s}"
-                ));
+                warnings.push(format!("skill not in library: {s}"));
             }
             exists
         })
@@ -61,25 +52,12 @@ fn run_inner(
         .collect();
 
     for w in &warnings {
-        term.write_line(&format!(
-            "  {} {w}",
-            style("⚠").yellow(),
-        ))?;
+        term.write_line(&format!("  {} {w}", style("⚠").yellow(),))?;
     }
 
-    symlinks::apply(
-        project_dir,
-        paths,
-        &valid_commands,
-        &valid_skills,
-    )?;
-    let settings_path = project_dir
-        .join(".claude")
-        .join("settings.local.json");
-    project::merge_enabled_plugins(
-        &settings_path,
-        &manifest.plugins,
-    )?;
+    symlinks::apply(project_dir, paths, &valid_commands, &valid_skills)?;
+    let settings_path = project_dir.join(".claude").join("settings.local.json");
+    project::merge_enabled_plugins(&settings_path, &manifest.plugins)?;
 
     term.write_line(&format!(
         "{} Synced: {} command(s), {} skill(s), {} plugin(s)",
@@ -163,32 +141,21 @@ mod tests {
         manifest.write(&env.project_dir).unwrap();
 
         let term = Term::stderr();
-        run_inner(&term, &env.paths, &env.project_dir)
-            .unwrap();
+        run_inner(&term, &env.paths, &env.project_dir).unwrap();
 
-        let cmd_link =
-            env.project_dir.join(".claude/commands/foo.md");
-        assert!(
-            cmd_link.symlink_metadata().unwrap().is_symlink()
-        );
+        let cmd_link = env.project_dir.join(".claude/commands/foo.md");
+        assert!(cmd_link.symlink_metadata().unwrap().is_symlink());
 
-        let skill_link =
-            env.project_dir.join(".claude/skills/review");
-        assert!(
-            skill_link.symlink_metadata().unwrap().is_symlink()
-        );
+        let skill_link = env.project_dir.join(".claude/skills/review");
+        assert!(skill_link.symlink_metadata().unwrap().is_symlink());
         assert!(
             skill_link.join("SKILL.md").exists(),
             "skill dir contents accessible through symlink",
         );
 
-        let settings_path = env
-            .project_dir
-            .join(".claude/settings.local.json");
-        let contents =
-            fs::read_to_string(&settings_path).unwrap();
-        let val: Value =
-            serde_json::from_str(&contents).unwrap();
+        let settings_path = env.project_dir.join(".claude/settings.local.json");
+        let contents = fs::read_to_string(&settings_path).unwrap();
+        let val: Value = serde_json::from_str(&contents).unwrap();
         let ep = val.get("enabledPlugins").unwrap();
         assert_eq!(ep.get("my/plugin").unwrap(), true);
         assert_eq!(ep.get("disabled/one").unwrap(), false);
@@ -200,25 +167,19 @@ mod tests {
 
         let manifest = Manifest {
             version: 1,
-            commands: vec![
-                "foo.md".to_string(),
-                "ghost.md".to_string(),
-            ],
+            commands: vec!["foo.md".to_string(), "ghost.md".to_string()],
             skills: vec!["missing-skill".to_string()],
             plugins: BTreeMap::new(),
         };
         manifest.write(&env.project_dir).unwrap();
 
         let term = Term::stderr();
-        run_inner(&term, &env.paths, &env.project_dir)
-            .unwrap();
+        run_inner(&term, &env.paths, &env.project_dir).unwrap();
 
-        let cmd_link =
-            env.project_dir.join(".claude/commands/foo.md");
+        let cmd_link = env.project_dir.join(".claude/commands/foo.md");
         assert!(cmd_link.symlink_metadata().is_ok());
 
-        let ghost =
-            env.project_dir.join(".claude/commands/ghost.md");
+        let ghost = env.project_dir.join(".claude/commands/ghost.md");
         assert!(ghost.symlink_metadata().is_err());
     }
 
@@ -226,8 +187,7 @@ mod tests {
     fn sync_errors_without_manifest() {
         let env = setup();
         let term = Term::stderr();
-        let result =
-            run_inner(&term, &env.paths, &env.project_dir);
+        let result = run_inner(&term, &env.paths, &env.project_dir);
         assert!(result.is_err());
     }
 }

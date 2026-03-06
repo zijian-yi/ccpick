@@ -52,6 +52,17 @@ ccpick template save backend        # save current project as template
 ccpick template apply backend       # apply to another project
 ```
 
+### Guide
+
+Generate `CLAUDE.md` and `AGENTS.md` from reusable templates and presets:
+
+```bash
+ccpick guide template create base       # create a template with {{ slot }} placeholders
+ccpick guide preset create language rust # create a slot preset
+ccpick guide compose base               # fill slots interactively, write both files
+ccpick guide apply rust-backend          # apply a top-level preset directly
+```
+
 See [USAGE.md](USAGE.md) for the full command reference.
 
 ## How it works

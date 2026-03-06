@@ -28,13 +28,8 @@ pub fn scan_skill_dirs(dir: &Path) -> Result<Vec<PathBuf>> {
     Ok(items)
 }
 
-fn collect_md_recursive(
-    root: &Path,
-    dir: &Path,
-    items: &mut Vec<PathBuf>,
-) -> Result<()> {
-    let entries = fs::read_dir(dir)
-        .with_context(|| format!("reading {}", dir.display()))?;
+fn collect_md_recursive(root: &Path, dir: &Path, items: &mut Vec<PathBuf>) -> Result<()> {
+    let entries = fs::read_dir(dir).with_context(|| format!("reading {}", dir.display()))?;
 
     for entry in entries {
         let entry = entry?;
@@ -55,13 +50,8 @@ fn collect_md_recursive(
     Ok(())
 }
 
-fn collect_skill_dirs_recursive(
-    root: &Path,
-    dir: &Path,
-    items: &mut Vec<PathBuf>,
-) -> Result<()> {
-    let entries = fs::read_dir(dir)
-        .with_context(|| format!("reading {}", dir.display()))?;
+fn collect_skill_dirs_recursive(root: &Path, dir: &Path, items: &mut Vec<PathBuf>) -> Result<()> {
+    let entries = fs::read_dir(dir).with_context(|| format!("reading {}", dir.display()))?;
 
     for entry in entries {
         let entry = entry?;
@@ -71,14 +61,13 @@ fn collect_skill_dirs_recursive(
         }
 
         if contains_skill_md(&path)? {
-            let rel =
-                path.strip_prefix(root).with_context(|| {
-                    format!(
-                        "stripping prefix {} from {}",
-                        root.display(),
-                        path.display()
-                    )
-                })?;
+            let rel = path.strip_prefix(root).with_context(|| {
+                format!(
+                    "stripping prefix {} from {}",
+                    root.display(),
+                    path.display()
+                )
+            })?;
             items.push(rel.to_path_buf());
         } else {
             collect_skill_dirs_recursive(root, &path, items)?;
@@ -88,8 +77,7 @@ fn collect_skill_dirs_recursive(
 }
 
 pub fn contains_skill_md(dir: &Path) -> Result<bool> {
-    let entries = fs::read_dir(dir)
-        .with_context(|| format!("reading {}", dir.display()))?;
+    let entries = fs::read_dir(dir).with_context(|| format!("reading {}", dir.display()))?;
 
     for entry in entries {
         let entry = entry?;
@@ -122,18 +110,14 @@ mod tests {
         let results = scan_md_files(root).unwrap();
         assert_eq!(
             results,
-            vec![
-                PathBuf::from("foo.md"),
-                PathBuf::from("sub/bar.md"),
-            ],
+            vec![PathBuf::from("foo.md"), PathBuf::from("sub/bar.md"),],
         );
     }
 
     #[test]
     fn md_missing_dir_returns_empty() {
         let tmp = tempfile::tempdir().unwrap();
-        let results =
-            scan_md_files(&tmp.path().join("nonexistent")).unwrap();
+        let results = scan_md_files(&tmp.path().join("nonexistent")).unwrap();
         assert!(results.is_empty());
     }
 
@@ -161,10 +145,7 @@ mod tests {
         let results = scan_skill_dirs(root).unwrap();
         assert_eq!(
             results,
-            vec![
-                PathBuf::from("another"),
-                PathBuf::from("my-skill"),
-            ],
+            vec![PathBuf::from("another"), PathBuf::from("my-skill"),],
         );
     }
 
@@ -191,10 +172,7 @@ mod tests {
         fs::write(skill.join("SKILL.md"), "# s").unwrap();
 
         let results = scan_skill_dirs(root).unwrap();
-        assert_eq!(
-            results,
-            vec![PathBuf::from("category/deep-skill")],
-        );
+        assert_eq!(results, vec![PathBuf::from("category/deep-skill")],);
     }
 
     #[test]
@@ -234,10 +212,7 @@ mod tests {
     #[test]
     fn skill_missing_dir_returns_empty() {
         let tmp = tempfile::tempdir().unwrap();
-        let results = scan_skill_dirs(
-            &tmp.path().join("nonexistent"),
-        )
-        .unwrap();
+        let results = scan_skill_dirs(&tmp.path().join("nonexistent")).unwrap();
         assert!(results.is_empty());
     }
 }

@@ -51,6 +51,17 @@ ccpick template save backend        # 将当前项目配置保存为模板
 ccpick template apply backend       # 应用到其他项目
 ```
 
+### 指南
+
+用可复用的模板和预设生成 `CLAUDE.md` 和 `AGENTS.md`：
+
+```bash
+ccpick guide template create base       # 创建包含 {{ slot }} 占位符的模板
+ccpick guide preset create language rust # 创建插槽预设
+ccpick guide compose base               # 交互式填充插槽，写入两个文件
+ccpick guide apply rust-backend          # 直接应用顶层预设
+```
+
 完整命令参考请查看 [USAGE.md](USAGE.md)。
 
 ## 工作原理

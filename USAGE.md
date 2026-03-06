@@ -139,6 +139,136 @@ Delete a saved template.
 ccpick template delete backend
 ```
 
+### `ccpick guide`
+
+Manage CLAUDE.md and AGENTS.md files using templates and presets. Guide templates contain `{{ slot_name }}` placeholders that are filled by slot presets. Top-level presets are complete, ready-to-use content. Both `CLAUDE.md` and `AGENTS.md` receive identical content.
+
+#### `ccpick guide template list`
+
+List guide templates.
+
+```
+ccpick guide template list
+```
+
+#### `ccpick guide template create <NAME>`
+
+Create a new guide template in `$EDITOR`.
+
+```
+ccpick guide template create base
+```
+
+Templates use `{{ slot_name }}` placeholders on their own lines. Slot names: `[a-zA-Z0-9_]+`. Duplicate slots are an error.
+
+#### `ccpick guide template edit <NAME>`
+
+Edit an existing guide template in `$EDITOR`.
+
+```
+ccpick guide template edit base
+```
+
+#### `ccpick guide template delete <NAME>`
+
+Delete a guide template.
+
+```
+ccpick guide template delete base
+```
+
+#### `ccpick guide preset list [SLOT]`
+
+List presets. Without a slot argument, lists top-level presets and all slot presets. With a slot argument, lists presets for that slot.
+
+```
+ccpick guide preset list            # all presets
+ccpick guide preset list language   # presets for the "language" slot
+```
+
+#### `ccpick guide preset create <NAME>`
+
+Create a top-level preset in `$EDITOR`.
+
+```
+ccpick guide preset create rust-backend
+```
+
+#### `ccpick guide preset create <NAME> --from-template <TEMPLATE>`
+
+Fill a template interactively and save the result as a top-level preset.
+
+```
+ccpick guide preset create rust-backend --from-template base
+```
+
+#### `ccpick guide preset create <SLOT> <NAME>`
+
+Create a slot preset in `$EDITOR`.
+
+```
+ccpick guide preset create language rust
+```
+
+#### `ccpick guide preset edit <NAME>`
+
+Edit a top-level preset in `$EDITOR`.
+
+```
+ccpick guide preset edit rust-backend
+```
+
+#### `ccpick guide preset edit <SLOT> <NAME>`
+
+Edit a slot preset in `$EDITOR`.
+
+```
+ccpick guide preset edit language rust
+```
+
+#### `ccpick guide preset delete <NAME>`
+
+Delete a top-level preset.
+
+```
+ccpick guide preset delete rust-backend
+```
+
+#### `ccpick guide preset delete <SLOT> <NAME>`
+
+Delete a slot preset.
+
+```
+ccpick guide preset delete language rust
+```
+
+#### `ccpick guide apply [PRESET]`
+
+Apply a top-level preset, writing identical content to `CLAUDE.md` and `AGENTS.md` in the project root. If no preset is given, opens an interactive picker. Prompts before overwriting existing files.
+
+```
+ccpick guide apply rust-backend
+ccpick guide apply                  # opens picker
+```
+
+#### `ccpick guide compose [TEMPLATE]`
+
+Compose from a template by interactively selecting a preset for each slot, then write `CLAUDE.md` and `AGENTS.md`. If no template is given, opens an interactive picker. Prompts before overwriting existing files.
+
+```
+ccpick guide compose base
+ccpick guide compose                # opens picker
+```
+
+#### `ccpick guide show <NAME>`
+
+Preview rendered output without writing files. Looks up the name as a preset first, then as a template.
+
+```
+ccpick guide show rust-backend
+ccpick guide show base
+```
+
 ## File layout
 
 | Path | Purpose |
@@ -146,6 +276,9 @@ ccpick template delete backend
 | `~/.claude/ccpick/commands/` | Command library |
 | `~/.claude/ccpick/skills/` | Skill library |
 | `~/.claude/ccpick/templates/` | Saved templates |
+| `~/.claude/ccpick/guide/templates/` | Guide templates |
+| `~/.claude/ccpick/guide/presets/` | Top-level guide presets |
+| `~/.claude/ccpick/guide/presets/{slot}/` | Slot guide presets |
 | `.claude/ccpick.json` | Project manifest |
 | `.claude/commands/` | Symlinks to library commands |
 | `.claude/skills/` | Symlinks to library skills |

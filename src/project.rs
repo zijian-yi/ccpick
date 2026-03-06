@@ -9,9 +9,7 @@ use serde_json::Value;
 use crate::config::Paths;
 
 /// Read `enabledPlugins` from `~/.claude/settings.json`.
-pub fn read_global_enabled_plugins(
-    paths: &Paths,
-) -> Result<BTreeMap<String, bool>> {
+pub fn read_global_enabled_plugins(paths: &Paths) -> Result<BTreeMap<String, bool>> {
     let path = paths.claude_home.join("settings.json");
     let contents = match fs::read_to_string(&path) {
         Ok(c) => c,
@@ -19,19 +17,12 @@ pub fn read_global_enabled_plugins(
             return Ok(BTreeMap::new());
         }
         Err(e) => {
-            return Err(anyhow::Error::new(e).context(
-                format!("reading {}", path.display()),
-            ));
+            return Err(anyhow::Error::new(e).context(format!("reading {}", path.display())));
         }
     };
     let val: Value =
-        serde_json::from_str(&contents).with_context(|| {
-            format!("parsing {}", path.display())
-        })?;
-    let Some(obj) = val
-        .get("enabledPlugins")
-        .and_then(Value::as_object)
-    else {
+        serde_json::from_str(&contents).with_context(|| format!("parsing {}", path.display()))?;
+    let Some(obj) = val.get("enabledPlugins").and_then(Value::as_object) else {
         return Ok(BTreeMap::new());
     };
     let mut result = BTreeMap::new();
@@ -46,50 +37,34 @@ pub fn read_global_enabled_plugins(
 /// Merge `enabledPlugins` into a settings JSON file, preserving all other
 /// keys. Works for both global `~/.claude/settings.json` and project-level
 /// `.claude/settings.local.json`.
-pub fn merge_enabled_plugins(
-    settings_path: &Path,
-    plugins: &BTreeMap<String, bool>,
-) -> Result<()> {
+pub fn merge_enabled_plugins(settings_path: &Path, plugins: &BTreeMap<String, bool>) -> Result<()> {
     if let Some(parent) = settings_path.parent() {
-        fs::create_dir_all(parent).with_context(|| {
-            format!("creating {}", parent.display())
-        })?;
+        fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
     }
 
     let mut settings: Value = if settings_path.exists() {
         let contents = fs::read_to_string(settings_path)
-            .with_context(|| {
-                format!("reading {}", settings_path.display())
-            })?;
-        serde_json::from_str(&contents).with_context(|| {
-            format!("parsing {}", settings_path.display())
-        })?
+            .with_context(|| format!("reading {}", settings_path.display()))?;
+        serde_json::from_str(&contents)
+            .with_context(|| format!("parsing {}", settings_path.display()))?
     } else {
         Value::Object(serde_json::Map::new())
     };
 
-    let obj = settings.as_object_mut().with_context(|| {
-        format!(
-            "{} is not a JSON object",
-            settings_path.display()
-        )
-    })?;
+    let obj = settings
+        .as_object_mut()
+        .with_context(|| format!("{} is not a JSON object", settings_path.display()))?;
 
     let plugin_map: serde_json::Map<String, Value> = plugins
         .iter()
         .map(|(k, v)| (k.clone(), Value::Bool(*v)))
         .collect();
 
-    obj.insert(
-        "enabledPlugins".to_string(),
-        Value::Object(plugin_map),
-    );
+    obj.insert("enabledPlugins".to_string(), Value::Object(plugin_map));
 
-    let json = serde_json::to_string_pretty(&settings)
-        .context("serializing settings")?;
-    fs::write(settings_path, json).with_context(|| {
-        format!("writing {}", settings_path.display())
-    })?;
+    let json = serde_json::to_string_pretty(&settings).context("serializing settings")?;
+    fs::write(settings_path, json)
+        .with_context(|| format!("writing {}", settings_path.display()))?;
 
     Ok(())
 }
@@ -112,8 +87,7 @@ mod tests {
         merge_enabled_plugins(&path, &plugins).unwrap();
 
         let contents = fs::read_to_string(&path).unwrap();
-        let val: Value =
-            serde_json::from_str(&contents).unwrap();
+        let val: Value = serde_json::from_str(&contents).unwrap();
         let ep = val.get("enabledPlugins").unwrap();
         assert_eq!(ep.get("plugin-a").unwrap(), true);
         assert_eq!(ep.get("plugin-b").unwrap(), false);
@@ -135,8 +109,7 @@ mod tests {
         merge_enabled_plugins(&path, &plugins).unwrap();
 
         let contents = fs::read_to_string(&path).unwrap();
-        let val: Value =
-            serde_json::from_str(&contents).unwrap();
+        let val: Value = serde_json::from_str(&contents).unwrap();
         assert_eq!(
             val.get("env")
                 .unwrap()
@@ -148,10 +121,7 @@ mod tests {
         );
         let ep = val.get("enabledPlugins").unwrap();
         assert_eq!(ep.get("new-plugin").unwrap(), true);
-        assert!(
-            ep.get("old").is_none(),
-            "old plugins replaced, not merged"
-        );
+        assert!(ep.get("old").is_none(), "old plugins replaced, not merged");
     }
 
     #[test]
@@ -168,8 +138,7 @@ mod tests {
     #[test]
     fn merge_creates_parent_dirs() {
         let tmp = tempfile::tempdir().unwrap();
-        let path =
-            tmp.path().join("deep").join("settings.json");
+        let path = tmp.path().join("deep").join("settings.json");
 
         let plugins = BTreeMap::new();
         merge_enabled_plugins(&path, &plugins).unwrap();

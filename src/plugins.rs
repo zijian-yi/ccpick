@@ -41,22 +41,16 @@ impl PluginInfo {
 }
 
 pub fn scan_plugins(claude_home: &Path) -> Result<Vec<PluginInfo>> {
-    let path = claude_home
-        .join("plugins")
-        .join("installed_plugins.json");
+    let path = claude_home.join("plugins").join("installed_plugins.json");
 
     if !path.exists() {
         return Ok(Vec::new());
     }
 
-    let contents = fs::read_to_string(&path)
-        .with_context(|| {
-            format!("reading {}", path.display())
-        })?;
+    let contents =
+        fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
     let installed: InstalledPlugins =
-        serde_json::from_str(&contents).with_context(|| {
-            format!("parsing {}", path.display())
-        })?;
+        serde_json::from_str(&contents).with_context(|| format!("parsing {}", path.display()))?;
 
     let mut plugins = Vec::new();
     for (id, installs) in &installed.plugins {
@@ -69,13 +63,9 @@ pub fn scan_plugins(claude_home: &Path) -> Result<Vec<PluginInfo>> {
 
         let (name, description) = if meta_path.exists() {
             let meta_str = fs::read_to_string(&meta_path)
-                .with_context(|| {
-                    format!("reading {}", meta_path.display())
-                })?;
-            let meta: PluginMeta =
-                serde_json::from_str(&meta_str).with_context(|| {
-                    format!("parsing {}", meta_path.display())
-                })?;
+                .with_context(|| format!("reading {}", meta_path.display()))?;
+            let meta: PluginMeta = serde_json::from_str(&meta_str)
+                .with_context(|| format!("parsing {}", meta_path.display()))?;
             (meta.name, meta.description)
         } else {
             (id.clone(), String::new())
@@ -98,28 +88,18 @@ mod tests {
 
     use super::*;
 
-    fn write_installed_plugins(
-        claude_home: &Path,
-        json: &str,
-    ) {
+    fn write_installed_plugins(claude_home: &Path, json: &str) {
         let dir = claude_home.join("plugins");
         fs::create_dir_all(&dir).unwrap();
-        fs::write(dir.join("installed_plugins.json"), json)
-            .unwrap();
+        fs::write(dir.join("installed_plugins.json"), json).unwrap();
     }
 
-    fn write_plugin_meta(
-        install_path: &Path,
-        name: &str,
-        desc: &str,
-    ) {
+    fn write_plugin_meta(install_path: &Path, name: &str, desc: &str) {
         let meta_dir = install_path.join(".claude-plugin");
         fs::create_dir_all(&meta_dir).unwrap();
         fs::write(
             meta_dir.join("plugin.json"),
-            format!(
-                r#"{{"name":"{name}","description":"{desc}"}}"#
-            ),
+            format!(r#"{{"name":"{name}","description":"{desc}"}}"#),
         )
         .unwrap();
     }
@@ -130,11 +110,7 @@ mod tests {
         let claude_home = tmp.path();
 
         let install_dir = tmp.path().join("installs/cool");
-        write_plugin_meta(
-            &install_dir,
-            "Cool Plugin",
-            "Does cool things",
-        );
+        write_plugin_meta(&install_dir, "Cool Plugin", "Does cool things");
 
         let json = format!(
             r#"{{"plugins":{{"acme/cool-plugin":[{{"installPath":"{}"}}]}}}}"#,

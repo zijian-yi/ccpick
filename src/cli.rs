@@ -1,10 +1,7 @@
 use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(
-    name = "ccpick",
-    about = "Per-project Claude Code extension manager"
-)]
+#[command(name = "ccpick", about = "Per-project Claude Code extension manager")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
@@ -24,6 +21,8 @@ pub enum Command {
     Install(InstallArgs),
     /// Manage reusable configuration templates
     Template(TemplateArgs),
+    /// Manage CLAUDE.md/AGENTS.md templates and presets
+    Guide(GuideArgs),
 }
 
 #[derive(Args)]
@@ -77,6 +76,98 @@ impl TidyArgs {
     fn all(&self) -> bool {
         !self.commands && !self.skills && !self.plugins
     }
+}
+
+#[derive(Args)]
+pub struct GuideArgs {
+    #[command(subcommand)]
+    pub action: GuideAction,
+}
+
+#[derive(Subcommand)]
+pub enum GuideAction {
+    /// Manage guide templates
+    Template {
+        #[command(subcommand)]
+        action: GuideTemplateAction,
+    },
+    /// Manage guide presets
+    Preset {
+        #[command(subcommand)]
+        action: GuidePresetAction,
+    },
+    /// Apply a top-level preset to write CLAUDE.md + AGENTS.md
+    Apply {
+        /// Preset name (opens picker if omitted)
+        name: Option<String>,
+    },
+    /// Compose from a template by filling slots interactively
+    Compose {
+        /// Template name (opens picker if omitted)
+        name: Option<String>,
+    },
+    /// Preview rendered output without writing files
+    Show {
+        /// Preset or template name
+        name: String,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum GuideTemplateAction {
+    /// List guide templates
+    List,
+    /// Create a new guide template in $EDITOR
+    Create {
+        /// Template name
+        name: String,
+    },
+    /// Edit an existing guide template in $EDITOR
+    Edit {
+        /// Template name
+        name: String,
+    },
+    /// Delete a guide template
+    Delete {
+        /// Template name
+        name: String,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum GuidePresetAction {
+    /// List presets
+    List {
+        /// Slot name (omit for top-level presets)
+        slot: Option<String>,
+    },
+    /// Create a preset
+    Create(GuidePresetCreateArgs),
+    /// Edit a preset in $EDITOR
+    Edit {
+        /// Preset name (top-level) or slot name (with second arg)
+        name: String,
+        /// Preset name within the slot
+        slot_preset: Option<String>,
+    },
+    /// Delete a preset
+    Delete {
+        /// Preset name (top-level) or slot name (with second arg)
+        name: String,
+        /// Preset name within the slot
+        slot_preset: Option<String>,
+    },
+}
+
+#[derive(Args)]
+pub struct GuidePresetCreateArgs {
+    /// Preset name (top-level) or slot name (with second arg)
+    pub name: String,
+    /// Preset name within the slot
+    pub slot_preset: Option<String>,
+    /// Build top-level preset from a template
+    #[arg(long)]
+    pub from_template: Option<String>,
 }
 
 #[derive(Args)]

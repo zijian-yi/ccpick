@@ -1,5 +1,5 @@
-use anyhow::{bail, Result};
-use console::{style, Term};
+use anyhow::{Result, bail};
+use console::{Term, style};
 
 use crate::commands::init;
 use crate::config::Paths;
@@ -35,8 +35,7 @@ pub fn run() -> Result<()> {
         Some(&existing.skills),
     )?;
 
-    let plugin_infos =
-        plugins::scan_plugins(&paths.claude_home)?;
+    let plugin_infos = plugins::scan_plugins(&paths.claude_home)?;
     let plugin_map = init::pick_plugins(
         &term,
         &plugin_infos,
@@ -44,17 +43,10 @@ pub fn run() -> Result<()> {
         "Select plugins to enable",
     )?;
 
-    symlinks::apply(
-        &project_dir, &paths, &commands, &skills,
-    )?;
+    symlinks::apply(&project_dir, &paths, &commands, &skills)?;
 
-    let settings_path = project_dir
-        .join(".claude")
-        .join("settings.local.json");
-    project::merge_enabled_plugins(
-        &settings_path,
-        &plugin_map,
-    )?;
+    let settings_path = project_dir.join(".claude").join("settings.local.json");
+    project::merge_enabled_plugins(&settings_path, &plugin_map)?;
 
     let manifest = Manifest {
         version: 1,

@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use console::{style, Term};
+use console::{Term, style};
 use dialoguer::MultiSelect;
 
 use crate::cli::TidyArgs;
@@ -30,11 +30,7 @@ impl Item {
     }
 }
 
-fn collect_items(
-    dir: &Path,
-    category: &'static str,
-    location: Location,
-) -> Result<Vec<Item>> {
+fn collect_items(dir: &Path, category: &'static str, location: Location) -> Result<Vec<Item>> {
     let paths = if category == "skills" {
         scanner::scan_skill_dirs(dir)?
     } else {
@@ -50,20 +46,14 @@ fn collect_items(
         .collect())
 }
 
-fn move_item(
-    src: &Path,
-    dst: &Path,
-    src_root: &Path,
-) -> Result<()> {
+fn move_item(src: &Path, dst: &Path, src_root: &Path) -> Result<()> {
     if let Some(parent) = dst.parent() {
-        fs::create_dir_all(parent).with_context(|| {
-            format!("creating directory {}", parent.display())
-        })?;
+        fs::create_dir_all(parent)
+            .with_context(|| format!("creating directory {}", parent.display()))?;
     }
 
-    fs::rename(src, dst).with_context(|| {
-        format!("moving {} → {}", src.display(), dst.display())
-    })?;
+    fs::rename(src, dst)
+        .with_context(|| format!("moving {} → {}", src.display(), dst.display()))?;
 
     let mut dir = src.parent();
     while let Some(d) = dir {
@@ -81,19 +71,10 @@ fn move_item(
     Ok(())
 }
 
-fn resolve_dirs(
-    item: &Item,
-    paths: &Paths,
-) -> Result<(PathBuf, PathBuf)> {
+fn resolve_dirs(item: &Item, paths: &Paths) -> Result<(PathBuf, PathBuf)> {
     match item.category {
-        "commands" => Ok((
-            paths.global_commands.clone(),
-            paths.library_commands(),
-        )),
-        "skills" => Ok((
-            paths.global_skills.clone(),
-            paths.library_skills(),
-        )),
+        "commands" => Ok((paths.global_commands.clone(), paths.library_commands())),
+        "skills" => Ok((paths.global_skills.clone(), paths.library_skills())),
         _ => anyhow::bail!("unknown category: {}", item.category),
     }
 }
@@ -120,27 +101,15 @@ pub fn run(args: &TidyArgs) -> Result<()> {
     Ok(())
 }
 
-fn tidy_commands_skills(
-    term: &Term,
-    paths: &Paths,
-    categories: &[&'static str],
-) -> Result<()> {
+fn tidy_commands_skills(term: &Term, paths: &Paths, categories: &[&'static str]) -> Result<()> {
     let mut items = Vec::new();
     for &category in categories {
         let (global_dir, library_dir) = match category {
-            "commands" => {
-                (&paths.global_commands, paths.library_commands())
-            }
-            _ => {
-                (&paths.global_skills, paths.library_skills())
-            }
+            "commands" => (&paths.global_commands, paths.library_commands()),
+            _ => (&paths.global_skills, paths.library_skills()),
         };
-        items.extend(collect_items(
-            global_dir, category, Location::Global,
-        )?);
-        items.extend(collect_items(
-            &library_dir, category, Location::Library,
-        )?);
+        items.extend(collect_items(global_dir, category, Location::Global)?);
+        items.extend(collect_items(&library_dir, category, Location::Library)?);
     }
 
     if items.is_empty() {
@@ -151,14 +120,9 @@ fn tidy_commands_skills(
         return Ok(());
     }
 
-    items.sort_by(|a, b| {
-        a.category
-            .cmp(b.category)
-            .then(a.rel_path.cmp(&b.rel_path))
-    });
+    items.sort_by(|a, b| a.category.cmp(b.category).then(a.rel_path.cmp(&b.rel_path)));
 
-    let labels: Vec<String> =
-        items.iter().map(Item::label).collect();
+    let labels: Vec<String> = items.iter().map(Item::label).collect();
     let defaults: Vec<bool> = items
         .iter()
         .map(|item| item.location == Location::Library)
@@ -186,8 +150,7 @@ fn tidy_commands_skills(
             continue;
         }
 
-        let (global_dir, library_dir) =
-            resolve_dirs(item, paths)?;
+        let (global_dir, library_dir) = resolve_dirs(item, paths)?;
 
         if want_library {
             let src = global_dir.join(&item.rel_path);
@@ -225,18 +188,14 @@ fn tidy_commands_skills(
 }
 
 fn tidy_plugins(term: &Term, paths: &Paths) -> Result<()> {
-    let plugin_infos =
-        plugins::scan_plugins(&paths.claude_home)?;
+    let plugin_infos = plugins::scan_plugins(&paths.claude_home)?;
 
     if plugin_infos.is_empty() {
-        term.write_line(
-            "\n  No plugins installed, skipping.",
-        )?;
+        term.write_line("\n  No plugins installed, skipping.")?;
         return Ok(());
     }
 
-    let current =
-        project::read_global_enabled_plugins(paths)?;
+    let current = project::read_global_enabled_plugins(paths)?;
     let plugin_map = init::pick_plugins(
         term,
         &plugin_infos,
@@ -244,12 +203,8 @@ fn tidy_plugins(term: &Term, paths: &Paths) -> Result<()> {
         "Select plugins to enable globally",
     )?;
 
-    let settings_path =
-        paths.claude_home.join("settings.json");
-    project::merge_enabled_plugins(
-        &settings_path,
-        &plugin_map,
-    )?;
+    let settings_path = paths.claude_home.join("settings.json");
+    project::merge_enabled_plugins(&settings_path, &plugin_map)?;
 
     let enabled = plugin_map.values().filter(|v| **v).count();
     term.write_line(&format!(

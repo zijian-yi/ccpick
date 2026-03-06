@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 
 pub struct RepoRef {
     pub owner: String,
@@ -13,10 +13,7 @@ pub struct RepoRef {
 
 impl RepoRef {
     pub fn clone_url(&self) -> String {
-        format!(
-            "https://github.com/{}/{}.git",
-            self.owner, self.repo
-        )
+        format!("https://github.com/{}/{}.git", self.owner, self.repo)
     }
 }
 
@@ -42,18 +39,14 @@ pub fn parse_github_url(url: &str) -> Result<RepoRef> {
         .unwrap_or(url);
 
     // Split into host part and path
-    let (host, path_str) =
-        if let Some(rest) = without_scheme.strip_prefix("github.com/")
-        {
-            ("github.com", rest)
-        } else if without_scheme.contains("github.com") {
-            bail!(
-                "unrecognized GitHub URL format: {url}"
-            );
-        } else {
-            // Treat as owner/repo shorthand
-            ("github.com", without_scheme)
-        };
+    let (host, path_str) = if let Some(rest) = without_scheme.strip_prefix("github.com/") {
+        ("github.com", rest)
+    } else if without_scheme.contains("github.com") {
+        bail!("unrecognized GitHub URL format: {url}");
+    } else {
+        // Treat as owner/repo shorthand
+        ("github.com", without_scheme)
+    };
 
     if host != "github.com" {
         bail!("only GitHub URLs are supported: {url}");
@@ -119,8 +112,7 @@ pub fn shallow_clone(
     repo_ref: &RepoRef,
     branch_override: Option<&str>,
 ) -> Result<tempfile::TempDir> {
-    let tmp = tempfile::tempdir()
-        .context("creating temporary directory for clone")?;
+    let tmp = tempfile::tempdir().context("creating temporary directory for clone")?;
 
     let branch = branch_override.or(repo_ref.branch.as_deref());
 
@@ -138,10 +130,7 @@ pub fn shallow_clone(
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        bail!(
-            "git clone failed:\n{}",
-            stderr.trim_end()
-        );
+        bail!("git clone failed:\n{}", stderr.trim_end());
     }
 
     Ok(tmp)
@@ -155,9 +144,7 @@ mod tests {
 
     #[test]
     fn parse_repo_root() {
-        let r =
-            parse_github_url("https://github.com/owner/repo")
-                .unwrap();
+        let r = parse_github_url("https://github.com/owner/repo").unwrap();
         assert_eq!(r.owner, "owner");
         assert_eq!(r.repo, "repo");
         assert!(r.branch.is_none());
@@ -166,10 +153,7 @@ mod tests {
 
     #[test]
     fn parse_with_branch_and_path() {
-        let r = parse_github_url(
-            "https://github.com/owner/repo/tree/main/commands",
-        )
-        .unwrap();
+        let r = parse_github_url("https://github.com/owner/repo/tree/main/commands").unwrap();
         assert_eq!(r.owner, "owner");
         assert_eq!(r.repo, "repo");
         assert_eq!(r.branch.as_deref(), Some("main"));
@@ -178,10 +162,7 @@ mod tests {
 
     #[test]
     fn parse_blob_with_nested_path() {
-        let r = parse_github_url(
-            "https://github.com/org/repo/blob/dev/a/b/c.md",
-        )
-        .unwrap();
+        let r = parse_github_url("https://github.com/org/repo/blob/dev/a/b/c.md").unwrap();
         assert_eq!(r.owner, "org");
         assert_eq!(r.repo, "repo");
         assert_eq!(r.branch.as_deref(), Some("dev"));
@@ -190,8 +171,7 @@ mod tests {
 
     #[test]
     fn parse_no_scheme() {
-        let r =
-            parse_github_url("github.com/owner/repo").unwrap();
+        let r = parse_github_url("github.com/owner/repo").unwrap();
         assert_eq!(r.owner, "owner");
         assert_eq!(r.repo, "repo");
         assert!(r.branch.is_none());
@@ -213,10 +193,7 @@ mod tests {
 
     #[test]
     fn parse_trailing_slash() {
-        let r = parse_github_url(
-            "https://github.com/owner/repo/",
-        )
-        .unwrap();
+        let r = parse_github_url("https://github.com/owner/repo/").unwrap();
         assert_eq!(r.owner, "owner");
         assert_eq!(r.repo, "repo");
         assert!(r.branch.is_none());
@@ -224,10 +201,7 @@ mod tests {
 
     #[test]
     fn parse_tree_branch_only() {
-        let r = parse_github_url(
-            "https://github.com/owner/repo/tree/main",
-        )
-        .unwrap();
+        let r = parse_github_url("https://github.com/owner/repo/tree/main").unwrap();
         assert_eq!(r.branch.as_deref(), Some("main"));
         assert!(r.path.is_none());
     }
@@ -244,32 +218,22 @@ mod tests {
 
     #[test]
     fn parse_non_github_fails() {
-        assert!(parse_github_url(
-            "https://gitlab.com/owner/repo"
-        )
-        .is_err());
+        assert!(parse_github_url("https://gitlab.com/owner/repo").is_err());
     }
 
     #[test]
     fn parse_missing_branch_after_tree_fails() {
-        assert!(parse_github_url(
-            "https://github.com/owner/repo/tree"
-        )
-        .is_err());
+        assert!(parse_github_url("https://github.com/owner/repo/tree").is_err());
     }
 
     #[test]
     fn parse_unexpected_segment_fails() {
-        assert!(parse_github_url(
-            "https://github.com/owner/repo/wiki/page"
-        )
-        .is_err());
+        assert!(parse_github_url("https://github.com/owner/repo/wiki/page").is_err());
     }
 
     #[test]
     fn clone_url_format() {
-        let r =
-            parse_github_url("https://github.com/o/r").unwrap();
+        let r = parse_github_url("https://github.com/o/r").unwrap();
         assert_eq!(r.clone_url(), "https://github.com/o/r.git");
     }
 }

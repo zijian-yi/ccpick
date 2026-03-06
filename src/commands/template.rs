@@ -1,5 +1,5 @@
-use anyhow::{bail, Result};
-use console::{style, Term};
+use anyhow::{Result, bail};
+use console::{Term, style};
 use dialoguer::Input;
 
 use crate::cli::TemplateAction;
@@ -12,19 +12,11 @@ pub fn run(action: &TemplateAction) -> Result<()> {
     let paths = Paths::resolve()?;
     match action {
         TemplateAction::Save { name } => save(&paths, name),
-        TemplateAction::Create { name } => {
-            create(&paths, name.as_deref())
-        }
-        TemplateAction::Apply { name } => {
-            apply(&paths, name)
-        }
-        TemplateAction::Edit { name } => {
-            edit(&paths, name)
-        }
+        TemplateAction::Create { name } => create(&paths, name.as_deref()),
+        TemplateAction::Apply { name } => apply(&paths, name),
+        TemplateAction::Edit { name } => edit(&paths, name),
         TemplateAction::List => list(&paths),
-        TemplateAction::Delete { name } => {
-            delete(&paths, name)
-        }
+        TemplateAction::Delete { name } => delete(&paths, name),
     }
 }
 
@@ -46,8 +38,7 @@ fn validate_name(name: &str) -> Result<()> {
 }
 
 fn prompt_name(default: Option<&str>) -> Result<String> {
-    let input =
-        Input::<String>::new().with_prompt("Template name");
+    let input = Input::<String>::new().with_prompt("Template name");
     let input = match default {
         Some(d) => input.default(d.to_string()),
         None => input,
@@ -76,10 +67,7 @@ fn save(paths: &Paths, name: &str) -> Result<()> {
     let templates_dir = paths.templates_dir();
     manifest.write_template(&templates_dir, name)?;
 
-    term.write_line(&format!(
-        "{} Template '{name}' saved.",
-        style("✓").green(),
-    ))?;
+    term.write_line(&format!("{} Template '{name}' saved.", style("✓").green(),))?;
     Ok(())
 }
 
@@ -89,24 +77,12 @@ fn create(paths: &Paths, name: Option<&str>) -> Result<()> {
     }
     let term = Term::stderr();
 
-    let commands = init::pick_category(
-        &term,
-        "commands",
-        &paths.library_commands(),
-        None,
-    )?;
+    let commands = init::pick_category(&term, "commands", &paths.library_commands(), None)?;
 
-    let skills = init::pick_category(
-        &term,
-        "skills",
-        &paths.library_skills(),
-        None,
-    )?;
+    let skills = init::pick_category(&term, "skills", &paths.library_skills(), None)?;
 
-    let plugin_infos =
-        plugins::scan_plugins(&paths.claude_home)?;
-    let plugin_map =
-        init::pick_plugins(&term, &plugin_infos, None, "Select plugins to enable")?;
+    let plugin_infos = plugins::scan_plugins(&paths.claude_home)?;
+    let plugin_map = init::pick_plugins(&term, &plugin_infos, None, "Select plugins to enable")?;
 
     let final_name = prompt_name(name)?;
 
@@ -138,8 +114,7 @@ fn edit(paths: &Paths, name: &str) -> Result<()> {
     let term = Term::stderr();
     let templates_dir = paths.templates_dir();
 
-    let existing =
-        Manifest::read_template(&templates_dir, name)?;
+    let existing = Manifest::read_template(&templates_dir, name)?;
 
     let commands = init::pick_category(
         &term,
@@ -155,8 +130,7 @@ fn edit(paths: &Paths, name: &str) -> Result<()> {
         Some(&existing.skills),
     )?;
 
-    let plugin_infos =
-        plugins::scan_plugins(&paths.claude_home)?;
+    let plugin_infos = plugins::scan_plugins(&paths.claude_home)?;
     let plugin_map = init::pick_plugins(
         &term,
         &plugin_infos,
