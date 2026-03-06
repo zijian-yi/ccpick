@@ -1,5 +1,7 @@
 use clap::{Args, Parser, Subcommand};
-use clap_complete::Shell;
+use clap_complete::engine::ArgValueCandidates;
+
+use crate::completions;
 
 #[derive(Parser)]
 #[command(name = "ccpick", about = "Per-project Claude Code extension manager")]
@@ -24,11 +26,6 @@ pub enum Command {
     Template(TemplateArgs),
     /// Manage CLAUDE.md/AGENTS.md templates and presets
     Guide(GuideArgs),
-    /// Generate shell completions
-    Completions {
-        /// Shell to generate completions for
-        shell: Shell,
-    },
 }
 
 #[derive(Args)]
@@ -49,7 +46,7 @@ pub struct InstallArgs {
 #[derive(Args)]
 pub struct InitArgs {
     /// Apply a saved template as pre-checked defaults
-    #[arg(long)]
+    #[arg(long, add = ArgValueCandidates::new(completions::manifest_templates))]
     pub template: Option<String>,
 }
 
@@ -105,16 +102,19 @@ pub enum GuideAction {
     /// Apply a top-level preset to write CLAUDE.md + AGENTS.md
     Apply {
         /// Preset name (opens picker if omitted)
+        #[arg(add = ArgValueCandidates::new(completions::guide_presets))]
         name: Option<String>,
     },
     /// Compose from a template by filling slots interactively
     Compose {
         /// Template name (opens picker if omitted)
+        #[arg(add = ArgValueCandidates::new(completions::guide_templates))]
         name: Option<String>,
     },
     /// Preview rendered output without writing files
     Show {
         /// Preset or template name
+        #[arg(add = ArgValueCandidates::new(completions::guide_presets_and_templates))]
         name: String,
     },
 }
@@ -131,11 +131,13 @@ pub enum GuideTemplateAction {
     /// Edit an existing guide template in $EDITOR
     Edit {
         /// Template name
+        #[arg(add = ArgValueCandidates::new(completions::guide_templates))]
         name: String,
     },
     /// Delete a guide template
     Delete {
         /// Template name
+        #[arg(add = ArgValueCandidates::new(completions::guide_templates))]
         name: String,
     },
 }
@@ -145,6 +147,7 @@ pub enum GuidePresetAction {
     /// List presets
     List {
         /// Slot name (omit for top-level presets)
+        #[arg(add = ArgValueCandidates::new(completions::guide_preset_slots))]
         slot: Option<String>,
     },
     /// Create a preset
@@ -152,6 +155,7 @@ pub enum GuidePresetAction {
     /// Edit a preset in $EDITOR
     Edit {
         /// Preset name (top-level) or slot name (with second arg)
+        #[arg(add = ArgValueCandidates::new(completions::guide_presets_and_slots))]
         name: String,
         /// Preset name within the slot
         slot_preset: Option<String>,
@@ -159,6 +163,7 @@ pub enum GuidePresetAction {
     /// Delete a preset
     Delete {
         /// Preset name (top-level) or slot name (with second arg)
+        #[arg(add = ArgValueCandidates::new(completions::guide_presets_and_slots))]
         name: String,
         /// Preset name within the slot
         slot_preset: Option<String>,
@@ -172,7 +177,7 @@ pub struct GuidePresetCreateArgs {
     /// Preset name within the slot
     pub slot_preset: Option<String>,
     /// Build top-level preset from a template
-    #[arg(long)]
+    #[arg(long, add = ArgValueCandidates::new(completions::guide_templates))]
     pub from_template: Option<String>,
 }
 
@@ -197,11 +202,13 @@ pub enum TemplateAction {
     /// Apply a template to the current project (shortcut for `init --template`)
     Apply {
         /// Template name
+        #[arg(add = ArgValueCandidates::new(completions::manifest_templates))]
         name: String,
     },
     /// Interactively update an existing template
     Edit {
         /// Template name
+        #[arg(add = ArgValueCandidates::new(completions::manifest_templates))]
         name: String,
     },
     /// List saved templates
@@ -209,6 +216,7 @@ pub enum TemplateAction {
     /// Delete a saved template
     Delete {
         /// Template name
+        #[arg(add = ArgValueCandidates::new(completions::manifest_templates))]
         name: String,
     },
 }

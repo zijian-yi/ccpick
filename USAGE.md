@@ -269,27 +269,21 @@ ccpick guide show rust-backend
 ccpick guide show base
 ```
 
-### `ccpick completions`
+### Shell completions
 
-Generate shell completion scripts.
+ccpick provides dynamic shell completions that resolve argument values (template names, preset names, etc.) at tab-completion time by reading from `~/.claude/ccpick/`.
 
-```
-ccpick completions <SHELL>
-```
-
-Supported shells: `bash`, `zsh`, `fish`, `elvish`, `powershell`.
-
-**Setup examples:**
+**Setup:**
 
 ```bash
 # Zsh (add to ~/.zshrc)
-eval "$(ccpick completions zsh)"
+source <(COMPLETE=zsh ccpick)
 
 # Bash (add to ~/.bashrc)
-eval "$(ccpick completions bash)"
+source <(COMPLETE=bash ccpick)
 
 # Fish (run once)
-ccpick completions fish > ~/.config/fish/completions/ccpick.fish
+source (COMPLETE=fish ccpick | psub)
 ```
 
 ## File layout

@@ -1,5 +1,6 @@
 mod cli;
 mod commands;
+mod completions;
 mod config;
 mod guide;
 mod manifest;
@@ -13,7 +14,7 @@ use std::io::ErrorKind;
 
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
-use clap_complete::generate;
+use clap_complete::CompleteEnv;
 use console::Term;
 
 use cli::{Cli, Command};
@@ -30,6 +31,8 @@ impl std::fmt::Display for UserAbort {
 impl std::error::Error for UserAbort {}
 
 fn main() -> Result<()> {
+    CompleteEnv::with_factory(Cli::command).complete();
+
     ctrlc::set_handler(on_ctrlc)?;
 
     let cli = Cli::parse();
@@ -41,15 +44,6 @@ fn main() -> Result<()> {
         Command::Install(args) => commands::install::run(&args),
         Command::Template(args) => commands::template::run(&args.action),
         Command::Guide(args) => commands::guide::run(&args.action),
-        Command::Completions { shell } => {
-            generate(
-                shell,
-                &mut Cli::command(),
-                "ccpick",
-                &mut std::io::stdout(),
-            );
-            Ok(())
-        }
     };
 
     if let Err(ref err) = result
